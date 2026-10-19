@@ -1,0 +1,11 @@
+{
+  "project": "kite-payment-ledger",
+  "status": "PASS",
+  "checks": [
+    "HTTP auth",
+    "import",
+    "matching",
+    "case review"
+  ],
+  "evidence_level": "E1"
+}
