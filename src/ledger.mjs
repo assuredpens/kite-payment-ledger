@@ -87,18 +87,42 @@ export class Ledger {
       refs = new Map();
     const find = (x) =>
       parents[x] === x ? x : (parents[x] = find(parents[x]));
+    const scope = (e) =>
+      JSON.stringify([
+        e.network || "",
+        e.merchant_origin || e.merchant_id || "",
+        (e.payer || "").toLowerCase(),
+      ]);
     const keys = (e) => [
-      ...["operation_id", "merchant_request_id", "receipt_ref", "artifact_hash"]
+      ...["operation_id", "merchant_request_id", "receipt_ref"]
         .filter((k) => e[k])
-        .map((k) => k + ":" + e[k]),
+        .map((k) => scope(e) + ":" + k + ":" + e[k]),
       ...(e.transaction_refs || [])
         .filter(Boolean)
-        .map((v) => "transaction:" + v),
+        .map((v) => scope(e) + ":transaction:" + v),
     ];
+    const operationIds = events.map(
+      (e) => new Set(e.operation_id ? [e.operation_id] : []),
+    );
+    const referencedOrders = new Map();
+    for (const e of events)
+      for (const k of keys(e))
+        if (e.operation_id) {
+          if (!referencedOrders.has(k)) referencedOrders.set(k, new Set());
+          referencedOrders.get(k).add(e.operation_id);
+        }
     events.forEach((e, i) => {
       for (const k of keys(e)) {
-        if (refs.has(k)) parents[find(i)] = find(refs.get(k));
-        else refs.set(k, i);
+        if (referencedOrders.get(k)?.size > 1) continue;
+        if (refs.has(k)) {
+          const a = find(i),
+            b = find(refs.get(k));
+          const ids = new Set([...operationIds[a], ...operationIds[b]]);
+          // A shared receipt/transaction may pay multiple business orders. Never lend one order's status to another.
+          if (ids.size > 1) continue;
+          parents[a] = b;
+          operationIds[b] = ids;
+        } else refs.set(k, i);
       }
     });
     const groups = new Map();
@@ -154,7 +178,15 @@ export class Ledger {
       if (payment === "CONFIRMED" && fulfillment === "RUNNING")
         issues.push("resume_original_job");
       return {
-        id: opIds[0] || "unlinked-" + group[0].event_id,
+        id: opIds[0]
+          ? opIds[0] +
+            (group[0].network ||
+            group[0].merchant_origin ||
+            group[0].merchant_id ||
+            group[0].payer
+              ? "@" + hash(scope(group[0])).slice(0, 12)
+              : "")
+          : "unlinked-" + group[0].event_id,
         operation_ids: opIds,
         payment_state: payment,
         fulfillment_state: fulfillment,
@@ -169,6 +201,18 @@ export class Ledger {
       for (let j = i + 1; j < operations.length; j++) {
         const a = operations[i],
           b = operations[j];
+        if (
+          a.events.some(
+            (x) =>
+              x.artifact_hash &&
+              b.events.some((y) => y.artifact_hash === x.artifact_hash),
+          )
+        )
+          candidates.push({
+            left: a.id,
+            right: b.id,
+            reason: "shared_artifact_not_confirmed",
+          });
         if (
           a.events.some((x) =>
             b.events.some(

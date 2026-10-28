@@ -2,6 +2,7 @@ import { Vault, fault } from "./store.mjs";
 import { auth, body, json, serve } from "./http.mjs";
 import { Ledger } from "./ledger.mjs";
 import { readFileSync } from "node:fs";
+import { normalize } from "./adapters.mjs";
 export function application({ vault, accounts }) {
   const ledger = new Ledger(vault);
   return async (req, res) => {
@@ -25,6 +26,21 @@ export function application({ vault, accounts }) {
     if (!tenant) throw fault("authentication_required", 401);
     if (req.method === "GET" && url.pathname === "/operations")
       return json(res, 200, ledger.view(tenant));
+    const adapter = url.pathname.match(
+      /^\/imports\/(passport-activity|seller-journal|facilitator-receipt)$/,
+    );
+    if (req.method === "POST" && adapter) {
+      const input = await body(req, 4 * 1024 * 1024);
+      return json(
+        res,
+        200,
+        await ledger.import(
+          tenant,
+          adapter[1],
+          normalize(adapter[1], input.payload, input.context),
+        ),
+      );
+    }
     if (
       req.method === "POST" &&
       [

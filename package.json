@@ -1,6 +1,6 @@
 {
   "name": "@assuredpens/kite-payment-ledger",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Payment and delivery evidence reconciliation with append-only case review",

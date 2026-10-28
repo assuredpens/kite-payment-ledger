@@ -1,0 +1,83 @@
+{
+  "observed_at": "2026-10-28T12:45:35.290Z",
+  "version": "0.2.0",
+  "project": "kite-payment-ledger",
+  "status": "PASS",
+  "node_runtime": "v24.22.1",
+  "test_cases": null,
+  "dotnet_assertions": null,
+  "evidence_level": "E1",
+  "actual_spend": false,
+  "log_sha256": "2ff3656f4c339f8fef0dce131c858846dc1c01acbd9c4a27f37edaaa21bf23d8",
+  "http": {
+    "project": "kite-payment-ledger",
+    "status": "PASS",
+    "checks": [
+      "HTTP auth",
+      "import",
+      "matching",
+      "case review"
+    ],
+    "evidence_level": "E1"
+  },
+  "cross_repository_flow": {
+    "observed_at": "2026-10-28T12:38:58.438Z",
+    "status": "PASS",
+    "evidence_level": "E1",
+    "actual_spend": false,
+    "funding_evidence": "fixture_only_not_a_real_payment",
+    "document_job": {
+      "status": "SUCCEEDED",
+      "actual_parser_used": true,
+      "original_payer_retrieval": true,
+      "cross_wallet_rejected": true,
+      "dispatch_before_confirmation": false,
+      "ledger_payment": "CONFIRMED",
+      "ledger_fulfillment": "READY"
+    },
+    "external_node_contract": {
+      "profile": "external",
+      "target": "http://127.0.0.1:4407/v1/jobs",
+      "observed_at": "2026-10-28T12:38:58.415Z",
+      "cases": [
+        {
+          "scenario": "external_challenge",
+          "status": "passed",
+          "failures": [],
+          "evidence_source": "external_http_unsigned",
+          "evidence_level": "E1",
+          "actual_spend": false
+        },
+        {
+          "scenario": "external_malformed_payment",
+          "status": "passed",
+          "failures": [],
+          "evidence_source": "external_http_unsigned",
+          "evidence_level": "E1",
+          "actual_spend": false
+        },
+        {
+          "scenario": "external_quote_stability",
+          "status": "passed",
+          "failures": [],
+          "evidence_source": "external_http_unsigned",
+          "evidence_level": "E1",
+          "actual_spend": false
+        }
+      ],
+      "summary": {
+        "failed": 0,
+        "blocked": 0,
+        "live_pass": 0,
+        "mock_pass": 0,
+        "unsigned_http_pass": 3
+      },
+      "funded_interoperability": "NOT_TESTED"
+    },
+    "a2a_configuration": {
+      "ready": false,
+      "blocked_checks": 40,
+      "network_requests_sent": 0
+    }
+  }
+}

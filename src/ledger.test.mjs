@@ -111,3 +111,59 @@ test("contradictory settlement evidence remains unknown", async (t) => {
   ]);
   assert.equal(l.view("a").operations[0].payment_state, "UNKNOWN");
 });
+test("same artifact or receipt never shares settlement across distinct orders", async (t) => {
+  const l = setup(t);
+  const r = await l.import("a", "merchant", [
+    event("a", {
+      operation_id: "order-a",
+      artifact_hash: "identical-output",
+      receipt_ref: "batch-receipt",
+      payment_state: "CONFIRMED",
+    }),
+    event("b", {
+      operation_id: "order-b",
+      artifact_hash: "identical-output",
+      receipt_ref: "batch-receipt",
+      fulfillment_state: "READY",
+    }),
+  ]);
+  assert.equal(r.operations.length, 2);
+  assert.equal(
+    r.operations.find((x) => x.id === "order-b").payment_state,
+    "UNKNOWN",
+  );
+  assert(
+    r.candidates.some((x) => x.reason === "shared_artifact_not_confirmed"),
+  );
+});
+test("request and transaction references are scoped by merchant and network", async (t) => {
+  const l = setup(t);
+  const r = await l.import("a", "merchant", [
+    event("a", {
+      operation_id: "same",
+      network: "eip155:2368",
+      merchant_origin: "https://a.example",
+      transaction_refs: ["0xabc"],
+      payment_state: "CONFIRMED",
+    }),
+    event("b", {
+      operation_id: "same",
+      network: "eip155:2366",
+      merchant_origin: "https://a.example",
+      transaction_refs: ["0xabc"],
+      fulfillment_state: "READY",
+    }),
+    event("c", {
+      operation_id: "same",
+      network: "eip155:2368",
+      merchant_origin: "https://b.example",
+      transaction_refs: ["0xabc"],
+      fulfillment_state: "READY",
+    }),
+  ]);
+  assert.equal(r.operations.length, 3);
+  assert.equal(
+    r.operations.filter((x) => x.payment_state === "CONFIRMED").length,
+    1,
+  );
+});

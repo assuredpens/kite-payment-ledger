@@ -2,11 +2,11 @@
 
 Payment and delivery evidence reconciliation with append-only case review.
 
-Version 0.1.0 is an AI-assisted engineering evaluation release, developed under one operator and assigned to this GitHub account. It is not evidence of independent human adoption, official Kite approval, Electric Capital inclusion or successful live payment.
+Version 0.2.0 is an AI-assisted engineering evaluation release, developed under one operator and assigned to this GitHub account. It is not evidence of independent human adoption, official Kite approval, Electric Capital inclusion or successful live payment.
 
 ## Run and verify
 
-Node.js 20.11+ is required.
+Node.js 20.11+ is required; Node.js 24 is used for current CI and is recommended.
 
 ```sh
 npm ci
@@ -32,3 +32,9 @@ Read [compatibility.json](compatibility.json) and [the protocol boundary](docs/P
 ## Scope and evidence
 
 [Original PRD](docs/PRD.md) describes the full target, not a claim that every external acceptance gate has passed. [Event contract](docs/EVENTS.md) defines the application records. The standalone repositories share protocol/storage support code, with distinct business implementations and tests. The license is MIT; third-party dependencies keep their upstream licenses. Reproduce failures without publishing payment signatures, account credentials or private files.
+
+## 2026-10-28 update
+
+Import original JSON through POST /imports/passport-activity, /imports/seller-journal or /imports/facilitator-receipt with {payload, context}. Context may contain merchant_origin and payer; receipts require occurred_at. Export the restricted seller journal locally, omit secrets, and send it only to your authenticated tenant. Activity maps events[].details.transaction; it ignores non-x402 events and never converts rounded display amounts into token units. Imported claims are labelled not chain verified. Shared artifact hashes are candidates only; distinct operation IDs never lend each other payment or delivery status. Reference keys are scoped by chain, merchant and payer. Scoped operation view IDs include a stable suffix; use the returned id for case review.
+
+See [Kite integration and interoperability boundaries](docs/KITE-INTEGRATION.md) and [this release's changes](CHANGELOG.md).
